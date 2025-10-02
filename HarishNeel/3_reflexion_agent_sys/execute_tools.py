@@ -1,18 +1,25 @@
 import json
-from typing import List, Dict, Any
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage, ToolMessage
+from typing import Dict, Any
+from langchain_core.messages import HumanMessage, BaseMessage, ToolMessage
 from langchain_community.tools import DuckDuckGoSearchResults
 
 # Create DuckDuckGo search tool
 duckduckgo_tool = DuckDuckGoSearchResults(max_results=5, output_format="json")
 
 # function to execute search queries from AnswerQuestion tool calls
-def execute_tools(state: List[BaseMessage]) -> List[BaseMessage]:
-    last_ai_message: AIMessage = state[-1]
-
-    # Extract tool calls from AI message
-    if not hasattr(last_ai_message, 'tool_calls') or not last_ai_message.tool_calls:
-        return []
+def execute_tools(state: Dict[str, Any]) -> Dict[str, Any]:
+    # Extract messages from state
+    messages = state.get("messages", [])
+    
+    # Get the last AI message with tool calls
+    last_ai_message = None
+    for msg in reversed(messages):
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            last_ai_message = msg
+            break
+    
+    if not last_ai_message:
+        return state
 
     # Process the AnswerQuestion or ReviseAnswer tool calls to extract search queries
     tool_messages = []
@@ -36,34 +43,36 @@ def execute_tools(state: List[BaseMessage]) -> List[BaseMessage]:
                 )
             )
 
-    return tool_messages
+    # Return updated state with new messages
+    updated_messages = messages + tool_messages
+    return {"messages": updated_messages}
 
-# example usage
-test_state = [
-    HumanMessage(
-        content="Write about how small business can leverage AI to grow",
-    ),
-    AIMessage(
-        content="",
-        tool_calls=[
-            {
-                "name": "AnswerQuestion",
-                "args": {
-                    'answer': '',
-                    'search queries': [
-                        'AI tools for small business',
-                        'AI in small business marketing',
-                        'AI automation for small business',
-                    ],
-                    'reflection': {
-                        'missing': '',
-                        'superfulous': '',
-                    }
-                },
-                "id": "call_kpthichFFEmlitHFvFhKy1Ra",
-            }
-        ],
-    )
-]
-
-# Execute the tools
+# example usage (commented out to avoid execution on import)
+# test_state = [
+#     HumanMessage(
+#         content="Write about how small business can leverage AI to grow",
+#     ),
+#     AIMessage(
+#         content="",
+#         tool_calls=[
+#             {
+#                 "name": "AnswerQuestion",
+#                 "args": {
+#                     'answer': '',
+#                     'search queries': [
+#                         'AI tools for small business',
+#                         'AI in small business marketing',
+#                         'AI automation for small business',
+#                     ],
+#                     'reflection': {
+#                         'missing': '',
+#                         'superfulous': '',
+#                    }
+#                 },
+#                 "id": "call_kpthichFFEmlitHFvFhKy1Ra",
+#             }
+#         ],
+#     )
+# ]
+# 
+# # Execute the tools

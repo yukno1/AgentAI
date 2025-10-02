@@ -15,7 +15,7 @@ class AnswerQuestion(BaseModel):
                                                   "to address the critique of your current answer.")
     reflection: Reflection = Field(description="Your reflection on the initial answer.")
 
-class ReivseAnswer(AnswerQuestion):
+class ReviseAnswer(AnswerQuestion):
     """Revise your original answer to your question."""
 
     references: List[str] = Field(
