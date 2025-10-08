@@ -41,5 +41,4 @@ result = app.invoke(
 )
 
 print(result)
-
 print(result["agent_outcome"].return_values["output"], "final result")
